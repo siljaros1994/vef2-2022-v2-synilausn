@@ -4,6 +4,12 @@
 
 <%- include('events') -%>
 
+<% if (user && user.admin) { %>
+    <div class="link">
+        <a class="link__link" href="/admin"><strong>Bæta við viðburði</strong></a>
+    </div>
+<% } %>
+
 <%- include('user-info') -%>
 
 <%- include('footer') -%>

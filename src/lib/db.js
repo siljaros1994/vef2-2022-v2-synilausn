@@ -189,6 +189,22 @@ export async function listRegistered(event) {
   return null;
 }
 
+export async function deleteEvent(id) {
+  const q = `
+    DELETE FROM events
+    WHERE id = $1
+    RETURNING id;
+  `;
+  const values = [id];
+  const result = await query(q, values);
+
+  if (result && result.rowCount === 1) {
+    return result.rows[0];
+  }
+
+  return null;
+}
+
 export async function end() {
   await pool.end();
 }

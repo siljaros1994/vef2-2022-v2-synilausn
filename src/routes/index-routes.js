@@ -2,6 +2,7 @@ import express from 'express';
 import { validationResult } from 'express-validator';
 import { catchErrors } from '../lib/catch-errors.js';
 import { listEvent, listEvents, listRegistered, register } from '../lib/db.js';
+import {createUser,findByUsername} from '../lib/users.js';
 import {
   registrationValidationMiddleware,
   sanitizationMiddleware,
@@ -93,6 +94,37 @@ async function registerRoute(req, res) {
 
   return res.render('error');
 }
+
+indexRouter.get('/signup', (req, res) => {
+  res.render('signup', { title: 'Nýskráning' });
+});
+
+indexRouter.post('/signup', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.render('signup', { error: 'Not all fields were filled in.' });
+  }
+
+  try {
+    const existingUser = await findByUsername(username);
+
+    if (existingUser) {
+      return res.render('signup', { error: 'This username is already taken.' });
+    }
+
+    const user = await createUser(username, password);
+
+    if (!user) {
+      return res.render('signup', { error: 'An error occurred while creating your account.' });
+    }
+
+    return res.redirect('/');
+  } catch (error) {
+    console.error(error);
+    return res.render('signup', { error: 'An error occurred while processing your request.' });
+  }
+});
 
 indexRouter.get('/', catchErrors(indexRoute));
 indexRouter.get('/:slug', catchErrors(eventRoute));

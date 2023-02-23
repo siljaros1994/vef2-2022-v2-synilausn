@@ -33,9 +33,10 @@ async function eventRoute(req, res, next) {
   const registered = await listRegistered(event.id);
 
   return res.render('event', {
+    admin: false,
     title: `${event.name} — Viðburðasíðan`,
-    event,
-    registered,
+    event: event,
+    registered: registered,
     errors: [],
     data: {},
   });
@@ -67,9 +68,10 @@ async function validationCheck(req, res, next) {
 
   if (!validation.isEmpty()) {
     return res.render('event', {
+      admin: false,
       title: `${event.name} — Viðburðasíðan`,
       data,
-      event,
+      event: event,
       registered,
       errors: validation.errors,
     });

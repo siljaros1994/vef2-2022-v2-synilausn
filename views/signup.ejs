@@ -1,0 +1,26 @@
+<%- include('header') -%>
+
+<h1>Nýskráning</h1>
+
+<form class="form" method="post" action="/signup" autocomplete="off">
+    <div class="field">
+        <label for="username">Notendanafn</label>
+        <input type="text" name="username" id="username">
+    </div>
+    <div class="field">
+        <label for="password">Lykilorð</label>
+        <input type="password" name="password" id="password">
+    </div>
+    <div class="field">
+        <label for="confirmPassword">Staðfestu lykilorð</label>
+        <input type="password" name="confirmPassword" id="confirmPassword">
+    </div>
+    <% if (message) { %>
+    <p><%= message %></p>
+    <% } %>
+    <button class="button">Stofna aðgang</button>
+</form>
+
+<a href="/">Til baka</a>
+<a href="/login">Innskráning</a>
+<%- include('footer') -%>

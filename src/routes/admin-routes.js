@@ -1,14 +1,16 @@
 import express from 'express';
 import { validationResult } from 'express-validator';
 import { catchErrors } from '../lib/catch-errors.js';
+import passport from 'passport'
 import {
   createEvent,
   listEvent,
   listEventByName,
   listEvents,
   updateEvent,
+  deleteEvent,
 } from '../lib/db.js';
-import passport, { ensureLoggedIn } from '../lib/login.js';
+import { ensureLoggedIn } from '../lib/login.js';
 import { slugify } from '../lib/slugify.js';
 import {
   registrationValidationMiddleware,
@@ -32,21 +34,17 @@ async function index(req, res) {
   });
 }
 
-function login(req, res) {
-  if (req.isAuthenticated()) {
-    return res.redirect('/admin');
+function isAdmin(req, res, next) {
+  if (req.user && req.user.admin) {
+    // User is an administrator, continue to the next middleware
+    next();
+  } else {
+    // User is not an administrator, redirect to an error page
+    res.status(401).render('error', {
+      title: 'Unauthorized',
+      message: 'You do not have permission to access this page.',
+    });
   }
-
-  let message = '';
-
-  // Athugum hvort einhver skilaboð séu til í session, ef svo er birtum þau
-  // og hreinsum skilaboð
-  if (req.session.messages && req.session.messages.length > 0) {
-    message = req.session.messages.join(', ');
-    req.session.messages = [];
-  }
-
-  return res.render('login', { message, title: 'Innskráning' });
 }
 
 async function validationCheck(req, res, next) {
@@ -179,7 +177,7 @@ async function eventRoute(req, res, next) {
   });
 }
 
-adminRouter.get('/', ensureLoggedIn, catchErrors(index));
+adminRouter.get('/', ensureLoggedIn, isAdmin, catchErrors(index));
 adminRouter.post(
   '/',
   ensureLoggedIn,
@@ -190,26 +188,40 @@ adminRouter.post(
   catchErrors(registerRoute)
 );
 
-adminRouter.get('/login', login);
-adminRouter.post(
-  '/login',
-
-  // Þetta notar strat að ofan til að skrá notanda inn
-  passport.authenticate('local', {
-    failureMessage: 'Notandanafn eða lykilorð vitlaust.',
-    failureRedirect: '/admin/login',
-  }),
-
-  // Ef við komumst hingað var notandi skráður inn, senda á /admin
-  (req, res) => {
+adminRouter.post('/login', async (req, res) => {
+  try {
+    await passport.authenticate('local', {
+      failureMessage: 'Notandanafn eða lykilorð vitlaust.',
+      failureRedirect: '/admin/login',
+    })(req, res);
+    
+    // Authentication was successful
     res.redirect('/admin');
+  } catch (error) {
+    // Handle any errors that occurred during authentication
+    console.error(error);
+    res.status(500).send('An error occurred during authentication.');
   }
-);
+});
+
 
 adminRouter.get('/logout', (req, res) => {
   // logout hendir session cookie og session
   req.logout();
   res.redirect('/');
+});
+
+adminRouter.delete('/:slug', async (req, res) => {
+  const { slug } = req.params;
+  const event = await listEvent(slug);
+
+  if (!event) {
+    return res.status(404).send('Event not found');
+  }
+
+  await deleteEvent(event.id);
+
+  return res.send('Event deleted');
 });
 
 // Verður að vera seinast svo það taki ekki yfir önnur route

@@ -18,6 +18,7 @@ async function indexRoute(req, res) {
     title: 'Viðburðasíðan',
     admin: false,
     events,
+    user: req.user
   });
 }
 

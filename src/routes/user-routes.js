@@ -1,12 +1,12 @@
 import express from 'express';
 import passport from '../lib/login.js';
-import {createUser,findByUsername} from '../lib/users.js';
+import { createUser, findByUsername } from '../lib/users.js';
 
 export const userRouter = express.Router();
 
 function login(req, res) {
   if (req.isAuthenticated()) {
-    return res.redirect('/login');
+    return res.redirect('/admin');
   }
 
   let message = '';
@@ -22,7 +22,10 @@ function login(req, res) {
 }
 
 userRouter.get('/login', login);
-userRouter.post('/login',
+userRouter.post(
+  '/login',
+
+  // Þetta notar strat að ofan til að skrá notanda inn
   passport.authenticate('local', {
     failureMessage: 'Notandanafn eða lykilorð vitlaust.',
     failureRedirect: '/login',
@@ -46,21 +49,28 @@ userRouter.get('/register', (req, res) => {
 
 userRouter.post('/register', async (req, res) => {
   const { username, password } = req.body;
-  const userExists = await findByUsername(username);
 
-  if (userExists) {
-    return res.render('register', { title: 'Nýskráning', error: 'Notandanafn er þegar í notkun.' });
+  if (!username || !password) {
+    return res.render('register');
   }
 
-  try {
-    const user = await createUser(username, password);
-    req.login(user, err => {
-      if (err) {
-        return res.render('register', { title: 'Nýskráning', error: 'Gat ekki skráð notanda inn.' });
-      }
-      return res.redirect('/');
-    });
-  } catch (error) {
-    return res.render('register', { title: 'Nýskráning', error: 'Gat ekki búið til notanda.' });
+  const existingUser = await findByUsername(username);
+
+  if (existingUser) {
+    return res.render('register');
   }
+
+  const user = await createUser(username, password);
+
+  if (!user) {
+    return res.render('register');
+  }
+
+  res.redirect('/login');
+});
+
+userRouter.get('/admin/logout', (req, res) => {
+  // logout clears session cookie and session
+  req.logout();
+  res.redirect('/');
 });

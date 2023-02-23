@@ -11,3 +11,6 @@ npm run test
 npm run setup
 npm start # eða `npm run dev`
 ```
+
+user: Admin
+pass: 123

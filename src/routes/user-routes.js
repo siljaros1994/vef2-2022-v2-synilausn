@@ -33,7 +33,7 @@ userRouter.post(
 
   // Ef við komumst hingað var notandi skráður inn, senda á /admin
   (req, res) => {
-    res.redirect('/login');
+    res.redirect('/');
   }
 );
 
